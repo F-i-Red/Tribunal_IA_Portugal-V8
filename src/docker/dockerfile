@@ -1,0 +1,54 @@
+# ══════════════════════════════════════════════════════════════════════
+# Tribunal IA Portugal V7 — Dockerfile seguro
+# CORRECÇÕES vs original:
+#   - Execução como utilizador não-root (tribunal:tribunal)
+#   - Permissões restritivas nos ficheiros
+#   - Health check nativo
+#   - Layer de dependências separado do código (cache eficiente)
+#   - Sem secrets em ARG ou ENV de build
+# ══════════════════════════════════════════════════════════════════════
+FROM python:3.11-slim AS base
+
+# Metadados
+LABEL maintainer="tribunal-ia@dgaj.mj.pt"
+LABEL description="Tribunal IA Portugal V7 — Apoio cognitivo judicial"
+LABEL version="7.0.0"
+
+# Criar utilizador não-root antes de qualquer outra coisa
+RUN groupadd -r tribunal && useradd -r -g tribunal -d /app -s /sbin/nologin tribunal
+
+# Dependências de sistema mínimas
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# ── Instalar dependências Python (layer separada para cache) ──────────
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# ── Copiar código ────────────────────────────────────────────────────
+COPY src/ ./src/
+COPY app.py api_server.py main.py verificar.py gerir_base.py ./
+COPY data/ ./data/
+COPY .streamlit/ ./.streamlit/
+
+# Criar directorias de runtime com permissões correctas
+RUN mkdir -p output_atas logs src/historico/data src/cache/data && \
+    chown -R tribunal:tribunal /app && \
+    chmod -R 755 /app && \
+    # Directorias com dados sensíveis: apenas o utilizador do serviço tem acesso
+    chmod 700 /app/src/historico/data && \
+    chmod 700 /app/output_atas
+
+# Mudar para utilizador não-root
+USER tribunal
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/saude || exit 1
+
+CMD ["python", "api_server.py"]

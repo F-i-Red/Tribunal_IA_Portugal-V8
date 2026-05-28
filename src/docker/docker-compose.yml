@@ -1,0 +1,171 @@
+# ══════════════════════════════════════════════════════════════════════
+# Tribunal IA Portugal V7 — docker-compose.yml seguro
+# CORRECÇÕES vs original:
+#   - Utilizador não-root (1000:1000)
+#   - Rede interna isolada (internal: true) — sem exposição directa à internet
+#   - Secrets via variáveis obrigatórias (${VAR:?err} falha se não definida)
+#   - Ollama local por defeito (soberania de dados)
+#   - Nginx como reverse proxy com TLS termination
+#   - read_only filesystem + tmpfs para /tmp
+#   - Health checks em todos os serviços
+# ══════════════════════════════════════════════════════════════════════
+version: "3.8"
+
+services:
+
+  # ── API REST ─────────────────────────────────────────────────────────
+  tribunal-ia:
+    build:
+      context: ../..
+      dockerfile: src/docker/dockerfile
+    container_name: tribunal-ia-api
+    restart: unless-stopped
+    environment:
+      - ENV=production
+      - GOV_MODE=${GOV_MODE:-false}
+      - BACKEND=${BACKEND:-ollama}
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODELO=${OLLAMA_MODELO:-llama3.3:70b}
+      # Secrets — falham ao arrancar se não definidos no .env do host
+      - API_SECRET_KEY=${API_SECRET_KEY:?API_SECRET_KEY nao definida no .env}
+      - AUDIT_ENCRYPTION_KEY=${AUDIT_ENCRYPTION_KEY:?AUDIT_ENCRYPTION_KEY nao definida no .env}
+      # Configuração
+      - RAG_MODO=${RAG_MODO:-hibrido}
+      - RAG_RERANKING=${RAG_RERANKING:-true}
+      - ANONIMIZAR_ENTIDADES=true
+      - API_CORS_ORIGINS=${API_CORS_ORIGINS:-http://localhost:3000}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - OBSERVABILITY_ENABLED=true
+    volumes:
+      # Dados de leis: read-only
+      - ../../data:/app/data:ro
+      # Atas e auditoria: persistentes, fora do container
+      - audit-data:/app/src/historico/data
+      - atas-data:/app/output_atas
+    networks:
+      - tribunal-internal
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=128m
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/saude"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    # Limitar recursos para evitar DoS
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
+
+  # ── Interface Streamlit ───────────────────────────────────────────────
+  tribunal-ui:
+    build:
+      context: ../..
+      dockerfile: src/docker/dockerfile
+    container_name: tribunal-ia-ui
+    restart: unless-stopped
+    command: ["python", "-m", "streamlit", "run", "app.py",
+              "--server.port=8501", "--server.headless=true",
+              "--server.address=0.0.0.0"]
+    environment:
+      - ENV=production
+      - GOV_MODE=${GOV_MODE:-false}
+      - BACKEND=${BACKEND:-ollama}
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODELO=${OLLAMA_MODELO:-llama3.3:70b}
+      - API_SECRET_KEY=${API_SECRET_KEY:?API_SECRET_KEY nao definida}
+      - AUDIT_ENCRYPTION_KEY=${AUDIT_ENCRYPTION_KEY:?AUDIT_ENCRYPTION_KEY nao definida}
+      - RAG_MODO=${RAG_MODO:-hibrido}
+      - ANONIMIZAR_ENTIDADES=true
+    volumes:
+      - ../../data:/app/data:ro
+      - audit-data:/app/src/historico/data
+      - atas-data:/app/output_atas
+    networks:
+      - tribunal-internal
+    user: "1000:1000"
+    depends_on:
+      tribunal-ia:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Ollama (LLM local — soberania de dados) ──────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tribunal-ia-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - tribunal-internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+        reservations:
+          # Descomentar se GPU disponível:
+          # devices:
+          #   - driver: nvidia
+          #     count: 1
+          #     capabilities: [gpu]
+          memory: 8G
+
+  # ── Nginx — Reverse Proxy com TLS termination ─────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: tribunal-ia-proxy
+    restart: unless-stopped
+    ports:
+      # Apenas o nginx expõe portas para o exterior
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ../../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../../nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - tribunal-internal
+      - tribunal-external
+    depends_on:
+      - tribunal-ui
+      - tribunal-ia
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+# ── Redes ─────────────────────────────────────────────────────────────
+networks:
+  tribunal-internal:
+    # Rede interna — serviços não acessíveis directamente do exterior
+    internal: true
+    driver: bridge
+  tribunal-external:
+    # Apenas o nginx está nesta rede
+    driver: bridge
+
+# ── Volumes persistentes ──────────────────────────────────────────────
+volumes:
+  ollama-models:
+    driver: local
+  audit-data:
+    driver: local
+  atas-data:
+    driver: local
