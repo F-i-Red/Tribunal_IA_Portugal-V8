@@ -217,3 +217,6 @@ def detectar_instancia_por_keywords(texto: str) -> str:
         scores[exc] = 0
     melhor = max(scores, key=lambda k: scores[k])
     return melhor if scores[melhor] > 0 else "TIC"
+
+# Alias de compatibilidade V8
+detectar_instancia = detectar_instancia_por_keywords
