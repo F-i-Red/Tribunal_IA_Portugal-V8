@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tribunal IA Portugal V6 — Servidor API REST (FastAPI)
+Tribunal IA Portugal V8 — Servidor API REST (FastAPI)
 Uso: python api_server.py [--host 0.0.0.0] [--port 8000]
 
 Documentação interactiva: http://localhost:8000/docs
@@ -49,7 +49,7 @@ def main() -> None:
 
     print(f"""
 ╔══════════════════════════════════════════════════════════════╗
-║  🏛️  TRIBUNAL IA PORTUGAL V7 — API REST                      ║
+║  🏛️  TRIBUNAL IA PORTUGAL V8 — API REST                      ║
 ╚══════════════════════════════════════════════════════════════╝
 
   Modelo    : {cfg.modelo_activo} [{cfg.backend}]
