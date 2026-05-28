@@ -1,5 +1,5 @@
 """
-API REST V7 — JWT seguro + Rate limiting obrigatório + CORS restrito + Observability
+API REST V8 — JWT seguro + Rate limiting obrigatório + CORS restrito + Observability
 Conformidade .gov: sem fallbacks inseguros, bloqueio OpenRouter em modo governamental.
 """
 from __future__ import annotations
