@@ -824,3 +824,195 @@ def criar_grafo_langgraph(processor: CaseProcessor):
     grafo.add_edge(nos[-1], END)
 
     return grafo.compile()
+
+# ═════════════════════════════════════════════════════════════════════
+# COMPATIBILIDADE V6 → V8
+# Adiciona ao final do case_processor.py existente.
+# Não altera nada acima — apenas acrescenta CaseResult e 3 métodos.
+# ═════════════════════════════════════════════════════════════════════
+import hashlib as _hashlib
+
+
+class CaseResult:
+    """
+    Adaptador V6 → V8.
+    Envolve EstadoCaso com a interface que o app.py espera:
+    result.case_id, result.detetive_report, result.process(), etc.
+    """
+
+    def __init__(self, estado: EstadoCaso, modelo: str = "", backend: str = ""):
+        self._e = estado
+        self.modelo_usado = modelo
+        self.backend_usado = backend
+
+    # ── Identidade ────────────────────────────────────────────────────
+    @property
+    def case_id(self) -> str:
+        return self._e.trace_id
+
+    @property
+    def trace_id(self) -> str:
+        return self._e.trace_id
+
+    @property
+    def instancia_codigo(self) -> str:
+        return self._e.instancia.codigo if self._e.instancia else "?"
+
+    @property
+    def instancia_nome(self) -> str:
+        return self._e.instancia.nome if self._e.instancia else "?"
+
+    # ── Peças processuais ─────────────────────────────────────────────
+    @property
+    def detetive_report(self) -> str:
+        return self._e.detetive
+
+    @property
+    def acusacao(self) -> str:
+        return self._e.acusacao
+
+    @property
+    def defesa(self) -> str:
+        return self._e.defesa
+
+    @property
+    def sentenca_rigorosa(self) -> str:
+        return self._e.sentenca_rigorosa
+
+    @property
+    def sentenca_garantista(self) -> str:
+        return self._e.sentenca_garantista
+
+    @property
+    def sentenca_equilibrada(self) -> str:
+        return self._e.sentenca_equilibrada
+
+    @property
+    def relatorio_consistencia(self) -> str:
+        return self._e.consistencia
+
+    @property
+    def analise_tedh(self) -> str:
+        return self._e.analise_tedh
+
+    @property
+    def sintese_judicial(self) -> str:
+        return self._e.sintese_judicial
+
+    @property
+    def ata_final(self) -> str:
+        return self._e.ata_final
+
+    # ── Métricas ──────────────────────────────────────────────────────
+    @property
+    def grau_incerteza(self) -> str:
+        return self._e.grau_incerteza
+
+    @property
+    def custo_total_usd(self) -> float:
+        return self._e.custo_total_usd
+
+    @property
+    def duracao_s(self) -> float:
+        return self._e.duracao_total_s
+
+    @property
+    def entities_found(self) -> list:
+        return self._e.entidades_anonimizadas
+
+    @property
+    def doc_hash(self) -> str:
+        return _hashlib.sha256(
+            (self._e.ata_final or "").encode("utf-8")
+        ).hexdigest()[:16]
+
+    # ── Campos que não existem na V8 (devolvem vazios) ────────────────
+    @property
+    def pdf_bytes(self):
+        return None
+
+    @property
+    def validacao_citacoes(self) -> str:
+        return ""
+
+    # ── Voto de vencido ───────────────────────────────────────────────
+    @property
+    def voto_vencido(self):
+        try:
+            from ..auditoria import analisar_dissenso
+            return analisar_dissenso(
+                self._e.sentenca_rigorosa,
+                self._e.sentenca_garantista,
+                self._e.sentenca_equilibrada,
+            )
+        except Exception:
+            return None
+
+    # ── Fallback para atributos desconhecidos ─────────────────────────
+    def __getattr__(self, name):
+        return getattr(self._e, name, None)
+
+
+# ── Métodos adicionados ao CaseProcessor ─────────────────────────────
+
+def _cp_process(
+    self,
+    case_description: str,
+    instancia_codigo: Optional[str] = None,
+    dados_instrucao: Optional[Dict] = None,
+    gerar_pdf: bool = True,
+    pdf_docs_extraidos: Optional[List] = None,
+    intervencao_utilizador: Optional[str] = None,
+    defesa_pre_gerada: Optional[str] = None,
+) -> "CaseResult":
+    """Alias process() → processar() com devolução de CaseResult."""
+    respostas: Dict[str, str] = {}
+    if dados_instrucao:
+        for rid, rd in dados_instrucao.get("respostas", {}).items():
+            respostas[rid] = rd.get("resposta", "") if isinstance(rd, dict) else str(rd)
+
+    desc = case_description
+    if pdf_docs_extraidos:
+        extras = "\n\n".join(str(d) for d in pdf_docs_extraidos if d)
+        if extras:
+            desc = f"{case_description}\n\n--- DOCUMENTOS ANEXOS ---\n{extras}"
+
+    if defesa_pre_gerada and not intervencao_utilizador:
+        intervencao_utilizador = defesa_pre_gerada
+
+    estado = self.processar(
+        case_description=desc,
+        instancia_codigo=instancia_codigo,
+        respostas_instrucao=respostas or None,
+        intervencao_utilizador=intervencao_utilizador,
+    )
+    stats = self.brain.get_cost_stats()
+    return CaseResult(estado, stats.get("modelo", ""), stats.get("backend", ""))
+
+
+def _cp_gerar_perguntas_instrucao(
+    self,
+    case_description: str,
+    instancia_codigo: Optional[str] = None,
+) -> Dict:
+    """Alias gerar_perguntas_instrucao() → processar_com_instrucao()."""
+    _, perguntas = self.processar_com_instrucao(case_description, instancia_codigo)
+    return perguntas
+
+
+def _cp_rag_ctx(self, texto: str, instancia: Optional[str] = None) -> str:
+    """Alias _rag_ctx() para o modo contraditório do app.py."""
+    from .instancias import INSTANCIAS, detectar_instancia_por_keywords
+    inst_obj = None
+    if instancia:
+        inst_obj = INSTANCIAS.get(instancia) or INSTANCIAS.get(
+            detectar_instancia_por_keywords(instancia)
+        )
+    ctx, _ = self._pesquisar_rag(texto[:500], inst_obj)
+    return ctx
+
+
+# Injectar os métodos na classe (no final do módulo, após a definição da classe)
+CaseProcessor.process = _cp_process
+CaseProcessor.gerar_perguntas_instrucao = _cp_gerar_perguntas_instrucao
+CaseProcessor._rag_ctx = _cp_rag_ctx
