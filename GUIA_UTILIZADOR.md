@@ -191,7 +191,12 @@ python gerar_chaves.py
 # Guarda estes valores no .env
 
 # 5. Criar arquivo .env
+# Windows:
+copy .env.example .env
+
+# Linux/Mac:
 cp .env.example .env
+
 # Edita .env e adiciona:
 # - OPENROUTER_API_KEY=sk_live_...  (se usares OpenRouter)
 # - API_SECRET_KEY=sk-abc123xyz789...
