@@ -182,7 +182,7 @@ if FASTAPI_OK:
                 )
 
         app = FastAPI(
-            title="Tribunal IA Portugal V7",
+            title="Tribunal IA Portugal V8",
             description=(
                 "API REST para apoio à decisão judicial.\n\n"
                 "## Auth\nUsa `POST /auth/token` para JWT Bearer.\n\n"
