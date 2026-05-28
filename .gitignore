@@ -1,0 +1,63 @@
+# ══════════════════════════════════════════════════════════════════════
+# .gitignore — Tribunal IA Portugal V7
+# CRÍTICO: .env e chaves NUNCA devem ser commitados
+# ══════════════════════════════════════════════════════════════════════
+
+# Secrets — NUNCA commitar
+.env
+.env.local
+.env.production
+.env.staging
+*.key
+*.pem
+nginx/certs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Dados gerados (podem conter informação sensível)
+output_atas/
+logs/
+src/cache/data/
+src/historico/data/
+data/jurisprudencia/
+data/precedentes/
+data/tedh/
+
+# Modelos ML (grandes)
+*.bin
+*.safetensors
+*.pt
+*.onnx
+models/
+.cache/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy / ruff
+.mypy_cache/
+.ruff_cache/
+
+# Docker
+*.tar

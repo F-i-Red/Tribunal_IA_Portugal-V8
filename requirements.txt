@@ -1,0 +1,54 @@
+# Tribunal IA Portugal V8 — requirements.txt
+
+# Core
+httpx>=0.28.0
+python-dotenv>=1.0.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+tenacity>=9.0.0
+typing-extensions>=4.11.0
+
+# Interface
+streamlit>=1.38.0
+
+# CLI
+typer>=0.12.0
+rich>=13.7.0
+
+# Logging
+structlog>=24.1.0
+
+# RAG V8 — embeddings PT + reranking
+sentence-transformers>=3.0.0
+numpy>=1.26.0
+# cohere>=5.0.0  # opcional: Cohere Rerank API
+
+# Orquestração
+langgraph>=0.2.0
+langchain-core>=0.3.0
+
+# API REST + Produção
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+slowapi>=0.1.9
+
+# Segurança
+cryptography>=42.0.0
+
+# Observability
+prometheus-client>=0.20.0
+opentelemetry-api>=1.24.0
+opentelemetry-sdk>=1.24.0
+opentelemetry-instrumentation-fastapi>=0.45b0
+
+# PDF
+PyMuPDF>=1.24.0
+reportlab>=4.2.0
+
+# Testes
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+respx>=0.21.0
