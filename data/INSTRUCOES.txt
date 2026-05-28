@@ -1,0 +1,31 @@
+PASTA DE LEGISLAÇÃO — INSTRUÇÕES
+
+Coloca aqui os ficheiros .txt ou .pdf das leis portuguesas.
+O sistema irá lê-los automaticamente ao iniciar.
+
+FONTES RECOMENDADAS (download gratuito):
+=========================================
+
+1. Constituição da República Portuguesa (CRP):
+   https://dre.pt/dre/legislacao-consolidada/decreto-aprovacao-constituicao-1976-115598
+
+2. Código Penal (CP):
+   https://dre.pt/dre/legislacao-consolidada/decreto-lei/1982-34522695
+
+3. Código de Processo Penal (CPP):
+   https://dre.pt/dre/legislacao-consolidada/decreto-lei/1987-34551175
+
+4. Código Civil (CC):
+   https://dre.pt/dre/legislacao-consolidada/decreto-lei/1966-34509075
+
+5. Código de Processo Civil (CPC):
+   https://dre.pt/dre/legislacao-consolidada/lei/2013-34580575
+
+6. Código do Trabalho (CT):
+   https://dre.pt/dre/legislacao-consolidada/lei/2009-34546475
+
+7. Jurisprudência (Acórdãos):
+   http://www.dgsi.pt/
+
+NOTA: O sistema funciona sem documentos (usa o conhecimento geral do modelo),
+mas com documentos a análise será mais precisa e fundamentada.
