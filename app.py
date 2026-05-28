@@ -1,5 +1,5 @@
 """
-Tribunal IA Portugal V8 — Interface Streamlit
+Tribunal IA Portugal V6 — Interface Streamlit
 Wizard 6 passos: Caso → Documentos → Instrução → Contraditório → Processo → Resultado
 """
 from __future__ import annotations
@@ -31,7 +31,7 @@ def reset_processor():
         _processor_singleton = None
 
 st.set_page_config(
-    page_title="Tribunal IA Portugal V8",
+    page_title="Tribunal IA Portugal V6",
     page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -42,7 +42,7 @@ st.markdown("""
 :root { --azul:#1a3a5c; --azul2:#2d6a9f; --verde:#1e7e34; --verm:#c0392b; }
 .main-title { font-size:2.2rem; font-weight:800; color:var(--azul); }
 .sub-title  { font-size:1rem; color:#555; margin-bottom:1.2rem; }
-.disclaimer { background:#fff8e1; border-left:4px solid #f39c12;
+.disclaimer { background:#fff8e1; border-left:4px solid #f39c12; color:#000;
               border-radius:4px; padding:.7rem 1rem; margin-bottom:1rem; font-size:.88rem; }
 .badge-free  { display:inline-block; background:#d4edda; color:#155724;
                border:1px solid #c3e6cb; border-radius:20px; padding:2px 10px; font-size:.8rem; }
