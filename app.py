@@ -1,5 +1,5 @@
 """
-Tribunal IA Portugal V6 — Interface Streamlit
+Tribunal IA Portugal V8 — Interface Streamlit
 Wizard 6 passos: Caso → Documentos → Instrução → Contraditório → Processo → Resultado
 """
 from __future__ import annotations
@@ -31,7 +31,7 @@ def reset_processor():
         _processor_singleton = None
 
 st.set_page_config(
-    page_title="Tribunal IA Portugal V6",
+    page_title="Tribunal IA Portugal V8",
     page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="expanded",
