@@ -212,9 +212,9 @@ class CaseProcessor:
         try:
             from ..utils.anonymizer import PortugueseLegalAnonymizer
             anon = PortugueseLegalAnonymizer()
-            resultado = anon.anonymize(estado.caso_original)
-            estado.caso_anonimizado = resultado.text
-            estado.entidades_anonimizadas = resultado.items
+            texto_anon, entidades = anon.anonymize(estado.caso_original)
+            estado.caso_anonimizado = texto_anon
+            estado.entidades_anonimizadas = entidades
             self.logger.log_anonymization(
                 len(resultado.items),
                 list({e.label for e in resultado.items})
