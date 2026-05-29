@@ -367,7 +367,7 @@ class MotorRAG:
         vistos = set()
         for i, q in enumerate(queries[:6]):
             label = labels[i] if i < len(labels) else f"q{i}"
-            frags = self.pesquisar(q, instancia=instancia, top_n=top_n)
+            frags = self.pesquisar(q, n_resultados=top_n, instancia=instancia)
             novos = []
             for f in frags:
                 chave = f"{f.fonte}:{f.titulo[:40]}"
