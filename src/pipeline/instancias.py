@@ -218,5 +218,9 @@ def detectar_instancia_por_keywords(texto: str) -> str:
     melhor = max(scores, key=lambda k: scores[k])
     return melhor if scores[melhor] > 0 else "TIC"
 
-# Alias de compatibilidade
-detectar_instancia = detectar_instancia_por_keywords
+def detectar_instancia(texto_ou_codigo: str) -> InstanciaJudicial:
+    """Devolve InstanciaJudicial — aceita texto livre ou código directo."""
+    if texto_ou_codigo in INSTANCIAS:
+        return INSTANCIAS[texto_ou_codigo]
+    codigo = detectar_instancia_por_keywords(texto_ou_codigo)
+    return INSTANCIAS.get(codigo, INSTANCIAS["TIC"])
